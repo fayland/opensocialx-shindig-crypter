@@ -18,6 +18,14 @@ use Digest::SHA;
         hmac   => 'forhmac_sha1',
         iv     => 'anotherlength16k'
     } );
+    my $token = $crypter->create_token( {
+        owner    => $owner_id,
+        viewer   => $viewer_id,
+        app      => $app_id,
+        app_url  => $app_url,
+        domain   => $domain,
+        module_id => $module_id
+    } );
 
 =head1 DESCRIPTION
 
@@ -62,7 +70,12 @@ sub wrap {
     } );
     my $cipherText = $cipher->encrypt($encoded);
     my $hmac = Digest::SHA::hmac_sha1($cipherText, $self->{hmac});
+    print STDERR "hmac length " . length($hmac) . "ciper length " . length($cipherText) . "\n";
+    
     my $b64 = encode_base64($cipherText . $hmac);
+    while (length($b64) % 4) {
+        $b64 .= '=';
+    }
     return $b64;
 }
 
@@ -81,11 +94,13 @@ sub unwrap {
     my ( $self, $in, $max_age ) = @_;
 
     my $bin = decode_base64($in);
+    print STDERR "length is " . length($bin) . "\n";
     my $cipherText = substr($bin, 0, length($bin) - 20);
-    my $hmac = substr($bin, length($cipherText));
+    my $hmac = substr($bin, length($bin) - 20, 20);
     
     # verify
     my $v_hmac = Digest::SHA::hmac_sha1($cipherText, $self->{hmac});
+    print STDERR "\n$v_hmac\n$hmac\n";
     if ( $v_hmac ne $hmac ) {
         die 'HMAC verification failure';
     }
@@ -129,6 +144,27 @@ sub checkTimestamp {
     if (! ($minTime < $now && $now < $maxTime)) {
       die "Security token expired";
     }
+}
+
+my $OWNER_KEY = "o";
+my $APP_KEY = "a";
+my $VIEWER_KEY = "v";
+my $DOMAIN_KEY = "d";
+my $APPURL_KEY = "u";
+my $MODULE_KEY = "m";
+sub create_token {
+    my ( $self, $data ) = @_;
+    
+    my $token_data = {
+        $OWNER_KEY  => $data->{owner},
+        $APP_KEY    => $data->{app},
+        $VIEWER_KEY => $data->{viewer},
+        $DOMAIN_KEY => $data->{domain},
+        $APPURL_KEY => $data->{app_url},
+        $MODULE_KEY => $data->{module_id},
+    };
+    my $token = $self->wrap( $token_data );
+    return uri_escape( $token );
 }
 
 1;
