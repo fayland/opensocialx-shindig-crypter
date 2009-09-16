@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More tests => 9;
-
+use URI::Escape;
 use OpenSocialX::Shindig::Crypter;
 
 my $crypter = OpenSocialX::Shindig::Crypter->new( {
@@ -36,6 +36,7 @@ my $token = $crypter->create_token( {
     module_id => 10
 } );
 sleep 1;
+$token = uri_unescape($token); ######## for URL
 my $data = $crypter->unwrap($token, 3600);
 is $data->{o}, 2;
 is $data->{v}, 4;

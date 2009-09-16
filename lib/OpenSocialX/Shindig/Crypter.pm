@@ -70,12 +70,7 @@ sub wrap {
     } );
     my $cipherText = $cipher->encrypt($encoded);
     my $hmac = Digest::SHA::hmac_sha1($cipherText, $self->{hmac});
-    print STDERR "hmac length " . length($hmac) . "ciper length " . length($cipherText) . "\n";
-    
     my $b64 = encode_base64($cipherText . $hmac);
-    while (length($b64) % 4) {
-        $b64 .= '=';
-    }
     return $b64;
 }
 
@@ -94,13 +89,11 @@ sub unwrap {
     my ( $self, $in, $max_age ) = @_;
 
     my $bin = decode_base64($in);
-    print STDERR "length is " . length($bin) . "\n";
-    my $cipherText = substr($bin, 0, length($bin) - 20);
-    my $hmac = substr($bin, length($bin) - 20, 20);
+    my $cipherText = substr($bin, 0, -20);
+    my $hmac = substr($bin, length($cipherText));
     
     # verify
     my $v_hmac = Digest::SHA::hmac_sha1($cipherText, $self->{hmac});
-    print STDERR "\n$v_hmac\n$hmac\n";
     if ( $v_hmac ne $hmac ) {
         die 'HMAC verification failure';
     }
