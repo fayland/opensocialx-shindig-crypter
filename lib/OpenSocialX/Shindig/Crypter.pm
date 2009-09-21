@@ -104,6 +104,30 @@ decrypt the above data
 
 =item * _serializeAndTimestamp
 
+=back
+
+=head2 EXAMPLE
+
+    use URI::Escape;
+    use MIME::Base64;
+    use OpenSocialX::Shindig::Crypter;
+    
+    my $crypter = OpenSocialX::Shindig::Crypter->new( {
+        cipher => $config->{opensocial}->{cipherKey},
+        hmac   => $config->{opensocial}->{hmacKey},
+        iv     => $config->{opensocial}->{ivKey},
+    } );
+    my $security_token = uri_escape( encode_base64( $crypter->create_token( {
+        owner   => $owner_id,
+        viewer  => $viwer_id,
+        app     => $gadget->{id},
+        domain  => $config->{opensocial}->{container},
+        app_url => $gadget->{url},
+    } ) ) );
+    
+    # later in tt2 or others
+    # st=$security_token
+
 =cut
 
 # Key used for time stamp (in seconds) of data
