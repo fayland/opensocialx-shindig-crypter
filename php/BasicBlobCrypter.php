@@ -20,6 +20,8 @@
 
 class BlobExpiredException extends Exception {
 }
+class GeneralSecurityException extends Exception {
+}
 
 /**
  * This class provides basic binary blob encryption and decryption, for use with the security token
